@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
-import { TextInput, Button, Card } from 'flowbite-react';
 import { v4 as uuidv4 } from 'uuid';
+import { CardItem } from './CardItem';
+import { Header } from './Header';
 
 interface Todo {
 	id: string;
@@ -11,9 +12,25 @@ interface Todo {
 
 function App() {
 	const [todos, setTodos] = useState(Array<Todo>);
-	const [currentInput, setCurrentInput] = useState<string>('');
+	const [currentInput, setCurrentInput] = useState('');
+
+	useEffect(() => {
+		if (todos.length > 0) {
+			localStorage.setItem('todos', JSON.stringify(todos));
+		}
+	}, [todos]);
+
+	useEffect(() => {
+		const storageTodos = localStorage.getItem('todos');
+		if (storageTodos !== undefined && storageTodos !== null) {
+			setTodos(JSON.parse(storageTodos));
+		}
+	}, []);
 
 	const createTodo = () => {
+		if (currentInput === '' || currentInput === undefined) {
+			return;
+		}
 		setCurrentInput('');
 		const newTodo: Todo = {
 			id: uuidv4(),
@@ -46,35 +63,9 @@ function App() {
 
 	return (
 		<main className='min-h-screen flex flex-col items-center p-10 gap-4'>
-			<div className='flex flex-col w-screen max-w-screen-sm'>
-				<h1 className='text-center text-4xl font-bold mb-4'>Novo Todo:</h1>
-				<div className='flex w-full gap-4'>
-					<TextInput
-						className='flex-1'
-						value={currentInput}
-						onChange={(e) => setCurrentInput(e.target.value)}
-					/>
-					<Button onClick={createTodo}>Enviar</Button>
-				</div>
-			</div>
-			<div className='flex flex-col gap-4'>
-				{todos.map((todo) => (
-					<Card className='w-screen max-w-screen-sm'>
-						{todo.completed ? (
-							<h1 className='text-2xl text-center line-through text-gray-500'>{todo.name}</h1>
-						) : (
-							<h1 className='text-2xl text-center'>{todo.name}</h1>
-						)}
-						<div className='flex gap-4'>
-							<Button className='flex-1' onClick={() => completeTodo(todo.id)}>
-								Completar!
-							</Button>
-							<Button color='failure' className='flex-1' onClick={() => deleteTodo(todo.id)}>
-								Apagar!
-							</Button>
-						</div>
-					</Card>
-				))}
+			<Header currentInput={currentInput} setCurrentInput={setCurrentInput} createTodo={createTodo} />
+			<div className='flex flex-col gap-4 w-11/12 max-w-screen-sm'>
+				{todos.map((todo) => CardItem(todo, completeTodo, deleteTodo))}
 			</div>
 		</main>
 	);
